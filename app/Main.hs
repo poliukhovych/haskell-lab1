@@ -8,11 +8,28 @@ module Main where
 import Control.Monad (when)
 import Data.Text (pack, unpack)
 import Database.MySQL.Simple
+    ( Connection,
+      close,
+      connect,
+      defaultConnectInfo,
+      ConnectInfo(connectDatabase, connectHost, connectUser,
+                  connectPassword) )
 import System.IO (hFlush, stdout)
 import Text.Read (readMaybe)
 
 import Database
+    ( findAuthorsForSoftware,
+      getPopularityReport,
+      linkSoftwareToAuthor,
+      recordUsage,
+      Entity(..),
+      SoftwarePopularity(SoftwarePopularity) )
 import Types
+    ( User(User),
+      Author(Author),
+      Software(Software, swDistroLocation, swName, swVersion,
+               swAnnotation, swKind),
+      License(License) )
 
 main :: IO ()
 main = do
@@ -60,15 +77,24 @@ handleChoice conn choice = case choice of
 addSoftware :: Connection -> IO ()
 addSoftware conn = do
   putStrLn "\n--- Add New Software ---"
-  name <- prompt "Name"
-  ver <- prompt "Version"
-  ann <- prompt "Annotation"
-  kind <- prompt "Kind"
-  loc <- prompt "Distribution Location"
-  licId <- promptForInt "License ID (add a license first if needed)"
-  let newSw = Software 0 (pack name) (pack ann) (pack kind) (pack ver) (pack loc) licId
-  newId <- insert conn newSw
-  putStrLn $ "Successfully added Software with ID: " ++ show newId
+  licId <- promptForInt "Enter License ID for the new software"  
+
+  maybeLicense <- findById conn licId :: IO (Maybe License)
+
+  case maybeLicense of
+    Nothing ->
+      putStrLn $ "Error: License with ID " ++ show licId ++ " does not exist. Please add it first."
+    Just _ -> do
+      putStrLn "License found. Please provide software details:"
+      name <- prompt "Name"
+      ver <- prompt "Version"
+      ann <- prompt "Annotation"
+      kind <- prompt "Kind"
+      loc <- prompt "Distribution Location"
+      
+      let newSw = Software 0 (pack name) (pack ann) (pack kind) (pack ver) (pack loc) licId
+      newId <- insert conn newSw
+      putStrLn $ "Successfully added Software with ID: " ++ show newId
 
 showAllSoftware :: Connection -> IO ()
 showAllSoftware conn = do

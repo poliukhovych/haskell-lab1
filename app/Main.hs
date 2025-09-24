@@ -1,6 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE ExplicitForAll #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
 
@@ -36,7 +35,7 @@ handleChoice conn choice = case choice of
   "2" -> showAllSoftware conn >> return True
   "3" -> updateSoftwareHandler conn >> return True
   "4" -> deleteEntity @Software conn "Software" >> return True
-  
+
   "5" -> addAuthor conn >> return True
   "6" -> showAllAuthors conn >> return True
   "7" -> deleteEntity @Author conn "Author" >> return True
@@ -151,7 +150,7 @@ showAllLicenses conn = do
 deleteEntity :: forall a. (Entity a, Show a) => Connection -> String -> IO ()
 deleteEntity conn entityName = do
   putStrLn $ "\n--- Delete " ++ entityName ++ " ---"
-  entityId <- promptForInt $ "Enter ID to delete"
+  entityId <- promptForInt "Enter ID to delete"
   maybeEntity <- findById conn entityId :: IO (Maybe a)
   case maybeEntity of
     Nothing -> putStrLn $ "Record with ID " ++ show entityId ++ " not found."

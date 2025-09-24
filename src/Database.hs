@@ -37,7 +37,7 @@ instance Entity Software where
   findAll conn = do
     res <- query_ conn "SELECT software_id, name, annotation, kind, version, distribution_location, license_id FROM software"
     return $ map (\(swId', name, ann, kind, ver, loc, licId) -> Software swId' name ann kind ver loc licId) res
-  
+
   deleteById conn softwareId =
     void $ execute conn "DELETE FROM software WHERE software_id = ?" (Only softwareId)
 
@@ -47,7 +47,7 @@ instance Entity Author where
                    (authorFullName author, authorContact author)
     [Only lastId] <- query_ conn "SELECT LAST_INSERT_ID()"
     return lastId
-  
+
   update conn author =
     void $ execute conn "UPDATE authors SET full_name = ?, contact_info = ? WHERE author_id = ?"
                    (authorFullName author, authorContact author, authorId author)
@@ -81,7 +81,7 @@ instance Entity License where
     return $ case res of
       [ (id', terms, cond) ] -> Just $ License id' terms cond
       _ -> Nothing
-  
+
   findAll conn = do
     res <- query_ conn "SELECT license_id, usage_terms, usage_conditions FROM licenses"
     return $ map (\(id', terms, cond) -> License id' terms cond) res
@@ -145,5 +145,4 @@ getPopularityReport conn = do
                      \JOIN usage_statistics us ON s.software_id = us.software_id \
                      \GROUP BY s.software_id \
                      \ORDER BY usage_count DESC"
-  return $ map (\(name, count) -> SoftwarePopularity name count) res
-  
+  return $ map (uncurry SoftwarePopularity) res
